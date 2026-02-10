@@ -1,32 +1,37 @@
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <chrono>
 #include <string>
+#include <ctime>
 
 struct Row
 {
     std::string symbol {};
-    std::time_t timestamp {}; // Use <chrono> instead
+    std::time_t timestamp {};
     double open {};
-    // double high {};
-    // double low {};
-    // double close {};
     int volume {}; 
-    // int trade_index {};
 
-    void print() { // Add parameter to change where print output goes
-        std::cout << "Symbol: " << symbol << "\n" << 
+    void print(std::ofstream& out) const { // Add parameter to change where print output goes
+        out << "Symbol: " << symbol << "\n" << 
         "Price opened at " << open << " at exactly " <<
-        std::chrono::system_clock::time_point(std::chrono::seconds(timestamp)) << ". Total volume was " << volume << "\n";
+        std::ctime(&timestamp) << "Total volume was " << volume << "\n";
     }
 };
 
 int main()
 {
-    Row row1 {"AAPL", 1770093451, 270.1, 100};
+    time_t now;
+    time(&now);
+    Row row1 {"AAPL", now, 270.1, 100};
     std::vector<Row> vec {};
 
-    row1.print();
+    std::ofstream out{ "sample.txt" };
+    if(!out) { // !out.is_open() || out.fail() Longer but has more checks
+        std::cerr << "Failed to open file" << "\n";
+        return 1;
+    }
+    row1.print(out);
 
     return 0;
 }

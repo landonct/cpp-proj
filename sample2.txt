@@ -1,0 +1,3 @@
+Symbol: AAPL
+Price opened at 270.1 at exactly Mon Feb  9 22:38:14 2026
+Total volume was 100
