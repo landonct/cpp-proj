@@ -19,6 +19,39 @@ struct Row
     }
 };
 
+std::string process_row(std::string row_string) {
+    return "";
+    std::cout << row_string << "\n";
+    Row row;
+
+    return "";
+}
+
+std::string process_names(std::string names_string) {
+    std::cout << names_string << "\n";
+    
+
+    return "";
+}
+
+bool read_csv(std::ifstream& input) {
+    std::string strInput {};
+    std::vector<std::string> names {};
+    std::vector<std::string> strInputVec {};
+    int i {0};
+
+    while(std::getline(input, strInput)) {
+        if(i == 0) {
+            process_names(strInput);
+            i++;
+        } else {
+            process_row(strInput);
+        }
+        
+    }
+    return 1;
+}
+
 int main()
 {
     time_t now;
@@ -32,6 +65,13 @@ int main()
         return 1;
     }
     row1.print(out);
+
+    std::ifstream input{"spy.csv"};
+    if(!input) {
+        std::cerr << "Failed to read file" << "\n";
+        return 1;
+    }
+    read_csv(input);
 
     return 0;
 }
