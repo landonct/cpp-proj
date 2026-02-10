@@ -35,9 +35,10 @@ struct Name
     }
 };
 
-std::string process_row(std::string row_string)
+std::string process_row(std::string row_string, char delim = ',')
 {
-    return "";
+    int max_delim {};
+    // for(int i = )
     std::cout << row_string << "\n";
     Row row;
 
