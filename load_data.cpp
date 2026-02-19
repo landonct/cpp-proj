@@ -13,6 +13,27 @@ struct Row
     double open{};
     int volume{};
 
+    Row() = default; // Default constructor
+
+    Row(const std::vector<std::string>& fields) // Construct from a vector
+    {
+        if (fields.size() != 4) 
+        {
+            throw std::runtime_error("Wrong number of values in fields");
+        }
+        symbol = fields[0];
+        timestamp = static_cast<std::time_t>(std::stoll(fields[1]));
+        open = std::stod(fields[2]);
+        volume = std::stoi(fields[3]);
+    }
+
+    Row(std::string sym, std::time_t tsmp, double o, int vol) 
+        : symbol(sym), // This syntax prevents default initialization to avoid an extra copy being made
+          timestamp(tsmp),
+          open(o),
+          volume(vol)
+    {}
+
     void print(std::ostream &out = std::cout) const
     { // Add parameter to change where print output goes
         out << "Symbol: " << symbol << "\n"
@@ -24,7 +45,7 @@ struct Name
 {
     std::vector<std::string> names;
 
-    void print(std::ostream &out = std::cout) const
+    void print(std::ostream& out = std::cout) const
     {
         for (auto it = names.begin(); it != names.end(); ++it)
         {
@@ -35,17 +56,29 @@ struct Name
     }
 };
 
-std::string process_row(std::string row_string, char delim = ',')
+Row process_row(std::string row_string, char delim = ',')
 {
     int max_delim {};
-    // for(int i = )
-    std::cout << row_string << "\n";
-    Row row;
+    for(int i = 0; i < row_string.length(); i++) 
+    {
+        if (row_string[i] == delim) 
+        {
+            max_delim++;
+        }
+    }
 
-    return "";
+    std::vector<std::string> values;
+    for(int j = 0; j <= max_delim; j++) 
+    {
+        values.push_back(row_string.substr(0, row_string.find(delim)));
+        row_string.erase(0, row_string.find(delim) + 1);
+    }
+    Row row {values};
+
+    return row;
 }
 
-Name process_names(std::string &names_string, char delim = ',')
+Name process_names(std::string names_string, char delim = ',')
 {
     int max_delim{};
     for (int i = 0; i < names_string.length(); i++)
@@ -67,12 +100,13 @@ Name process_names(std::string &names_string, char delim = ',')
     return name;
 }
 
-bool read_csv(std::ifstream &input)
+std::vector<Row> read_csv(std::ifstream &input)
 {
     std::string strInput{};
     std::vector<std::string> names{};
     std::vector<std::string> strInputVec{};
     int i{0};
+    std::vector<Row> table;
 
     while (std::getline(input, strInput))
     {
@@ -84,10 +118,15 @@ bool read_csv(std::ifstream &input)
         }
         else
         {
-            process_row(strInput);
+            Row row = process_row(strInput);
+            table.push_back(row);
         }
     }
-    return 1;
+    return table;
+}
+
+std::time_t parse_iso(const std::string& s) {
+    // Add in a method to parso ISO time string
 }
 
 int main()
@@ -105,13 +144,13 @@ int main()
     }
     row1.print(out);
 
-    std::ifstream input{"spy.csv"};
+    std::ifstream input{"spy_reduced.csv"};
     if (!input)
     {
         std::cerr << "Failed to read file" << "\n";
         return 1;
     }
-    read_csv(input);
+    std::vector<Row> table = read_csv(input);
 
     return 0;
 }
