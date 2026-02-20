@@ -1,3 +1,7 @@
 Symbol: AAPL
+<<<<<<< HEAD
 Price opened at 270.1 at Thu Feb 19 22:47:46 2026
+=======
+Price opened at 270.1 at Fri Feb 20 16:58:27 2026
+>>>>>>> 0d7353e7aa772ffd7dbdbeaf5cd2ad25e8106a0e
 Total volume was 100
