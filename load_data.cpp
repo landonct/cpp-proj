@@ -5,6 +5,7 @@
 #include <string>
 #include <ctime>
 #include <string_view>
+#include <iomanip>
 
 struct Row
 {
@@ -15,29 +16,49 @@ struct Row
 
     Row() = default; // Default constructor
 
-    Row(const std::vector<std::string>& fields) // Construct from a vector
+    Row(const std::vector<std::string> &fields) // Construct from a vector
     {
-        if (fields.size() != 4) 
+        if (fields.size() != 4)
         {
             throw std::runtime_error("Wrong number of values in fields");
         }
         symbol = fields[0];
-        timestamp = static_cast<std::time_t>(std::stoll(fields[1]));
+        timestamp = parse_iso(fields[1]);
         open = std::stod(fields[2]);
         volume = std::stoi(fields[3]);
     }
 
-    Row(std::string sym, std::time_t tsmp, double o, int vol) 
+    Row(std::string sym, std::time_t tsmp, double o, int vol)
         : symbol(sym), // This syntax prevents default initialization to avoid an extra copy being made
           timestamp(tsmp),
           open(o),
           volume(vol)
-    {}
+    {
+    }
 
     void print(std::ostream &out = std::cout) const
     { // Add parameter to change where print output goes
         out << "Symbol: " << symbol << "\n"
-            << "Price opened at " << open << " at exactly " << std::ctime(&timestamp) << "Total volume was " << volume << "\n";
+            << "Price opened at " << open << " at " << std::ctime(&timestamp) << "Total volume was " << volume << "\n";
+    }
+
+    std::time_t parse_iso(const std::string &s)
+    {
+        std::time_t out_time{};
+        std::tm time{}; // Add in a method to parse ISO time string
+        std::istringstream ss(s);
+        ss >> std::get_time(&time, "%Y-%m-%dT%H:%M:%S");
+
+        if (ss.fail())
+        {
+            throw std::runtime_error("Failed to parse: " + s);
+        }
+
+#ifdef _WIN32
+        return _mkgmtime(&time);
+#else
+        return timegm(&time);
+#endif
     }
 };
 
@@ -45,7 +66,7 @@ struct Name
 {
     std::vector<std::string> names;
 
-    void print(std::ostream& out = std::cout) const
+    void print(std::ostream &out = std::cout) const
     {
         for (auto it = names.begin(); it != names.end(); ++it)
         {
@@ -56,24 +77,39 @@ struct Name
     }
 };
 
+struct Table
+{
+    std::vector<Row> table;
+
+    void print() const
+    {
+        for (Row row : table)
+        {
+            row.print();
+        }
+    }
+
+    
+};
+
 Row process_row(std::string row_string, char delim = ',')
 {
-    int max_delim {};
-    for(int i = 0; i < row_string.length(); i++) 
+    int max_delim{};
+    for (int i = 0; i < row_string.length(); i++)
     {
-        if (row_string[i] == delim) 
+        if (row_string[i] == delim)
         {
             max_delim++;
         }
     }
 
     std::vector<std::string> values;
-    for(int j = 0; j <= max_delim; j++) 
+    for (int j = 0; j <= max_delim; j++)
     {
         values.push_back(row_string.substr(0, row_string.find(delim)));
         row_string.erase(0, row_string.find(delim) + 1);
     }
-    Row row {values};
+    Row row{values};
 
     return row;
 }
@@ -113,7 +149,6 @@ std::vector<Row> read_csv(std::ifstream &input)
         if (i == 0)
         {
             Name name = process_names(strInput);
-            name.print();
             i++;
         }
         else
@@ -125,8 +160,23 @@ std::vector<Row> read_csv(std::ifstream &input)
     return table;
 }
 
-std::time_t parse_iso(const std::string& s) {
-    // Add in a method to parso ISO time string
+std::time_t parse_iso(const std::string &s)
+{
+    std::time_t out_time{};
+    std::tm time{}; // Add in a method to parse ISO time string
+    std::istringstream ss(s);
+    ss >> std::get_time(&time, "%Y-%m-%dT%H:%M:%S");
+
+    if (ss.fail())
+    {
+        throw std::runtime_error("Failed to parse: " + s);
+    }
+
+#ifdef _WIN32
+    return _mkgmtime(&time);
+#else
+    return timegm(&time);
+#endif
 }
 
 int main()
@@ -151,6 +201,11 @@ int main()
         return 1;
     }
     std::vector<Row> table = read_csv(input);
+    // for (const Row row : table)
+    for (int i = 0; i <= 1; i++)
+    {
+        table[i].print();
+    }
 
     return 0;
 }
