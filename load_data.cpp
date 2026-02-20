@@ -6,6 +6,7 @@
 #include <ctime>
 #include <string_view>
 #include <iomanip>
+#include <variant>
 
 struct Row
 {
@@ -60,6 +61,24 @@ struct Row
         return timegm(&time);
 #endif
     }
+
+    std::variant<std::string, std::time_t, double, int>
+    get(int col)
+    {
+        switch (col)
+        {
+        case 0:
+            return symbol;
+        case 1:
+            return timestamp;
+        case 2:
+            return open;
+        case 3:
+            return volume;
+        default:
+            std::runtime_error("Column index not found");
+        }
+    }
 };
 
 struct Name
@@ -81,6 +100,16 @@ struct Table
 {
     std::vector<Row> table;
 
+    Table() = default;
+
+    Table(std::vector<Row> &row_vec)
+    {
+        for (const Row row : row_vec)
+        {
+            table.push_back(row);
+        }
+    }
+
     void print() const
     {
         for (Row row : table)
@@ -89,7 +118,93 @@ struct Table
         }
     }
 
-    
+    void print_raw() const
+    {
+        for (Row row : table)
+        {
+            std::string str_time = std::ctime(&row.timestamp);
+            str_time.pop_back();
+            std::cout << row.symbol << ", "
+                      << str_time << ", "
+                      << row.open << ", "
+                      << row.volume << "\n";
+        }
+
+        std::cout << "\n";
+    }
+
+    Table add(Row new_row)
+    {
+        std::vector<Row> old_table;
+
+        for (Row &row : table)
+        {
+            old_table.push_back(row);
+        }
+
+        old_table.push_back(new_row);
+        Table table_added = old_table;
+
+        return table_added;
+    }
+
+    int count()
+    {
+        int count = 0;
+        for (Row &row : table)
+        {
+            count++;
+        }
+
+        return count;
+    }
+
+    double sum_open()
+    {
+        double sum = 0;
+        for (Row row : table)
+        {
+            sum += row.open;
+        }
+
+        return sum;
+    }
+
+    double sum_volume()
+    {
+        double volume = 0;
+        for (Row row : table)
+        {
+            volume += row.volume;
+        }
+
+        return volume;
+    }
+
+    Table head(int n = 5)
+    {
+        Table table_head;
+        int i = 0;
+        for (Row row : table)
+        {
+            table_head.add(row);
+            i++;
+
+            if (i >= n)
+            {
+                break;
+            }
+        }
+
+        table_head.print_raw();
+        return table;
+    }
+
+    Table filter(std::string filter_expression)
+    {
+        Table table;
+        return table;
+    }
 };
 
 Row process_row(std::string row_string, char delim = ',')
@@ -136,7 +251,7 @@ Name process_names(std::string names_string, char delim = ',')
     return name;
 }
 
-std::vector<Row> read_csv(std::ifstream &input)
+std::vector<Row> read_csv(std::ifstream &input, int max_rows = 1000000)
 {
     std::string strInput{};
     std::vector<std::string> names{};
@@ -144,7 +259,7 @@ std::vector<Row> read_csv(std::ifstream &input)
     int i{0};
     std::vector<Row> table;
 
-    while (std::getline(input, strInput))
+    while (std::getline(input, strInput) && i <= max_rows)
     {
         if (i == 0)
         {
@@ -155,6 +270,7 @@ std::vector<Row> read_csv(std::ifstream &input)
         {
             Row row = process_row(strInput);
             table.push_back(row);
+            i++;
         }
     }
     return table;
@@ -200,12 +316,21 @@ int main()
         std::cerr << "Failed to read file" << "\n";
         return 1;
     }
-    std::vector<Row> table = read_csv(input);
-    // for (const Row row : table)
+
+    std::vector<Row> row_table = read_csv(input, 2);
+    Table table = row_table;
+
     for (int i = 0; i <= 1; i++)
     {
-        table[i].print();
+        row_table[i].print();
     }
+
+    std::cout << table.count() << "\n";
+    std::cout << table.sum_open() << "\n";
+    std::cout << table.sum_volume() << "\n";
+
+    table.print_raw();
+    table.head();
 
     return 0;
 }
