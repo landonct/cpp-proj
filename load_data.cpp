@@ -6,6 +6,7 @@
 #include <ctime>
 #include <string_view>
 #include <iomanip>
+#include <sstream>
 
 struct Row
 {
