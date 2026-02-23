@@ -44,7 +44,7 @@ struct Row
             << "Price opened at " << open << " at " << std::ctime(&timestamp) << "Total volume was " << volume << "\n";
     }
 
-    std::time_t parse_iso(const std::string &s)
+   static std::time_t parse_iso(const std::string &s)
     {
         std::time_t out_time{};
         std::tm time{}; // Add in a method to parse ISO time string
@@ -64,7 +64,7 @@ struct Row
     }
 
     std::variant<std::string, std::time_t, double, int>
-    get(int col)
+    get(int col) const
     {
         switch (col)
         {
@@ -77,7 +77,7 @@ struct Row
         case 3:
             return volume;
         default:
-            std::runtime_error("Column index not found");
+            throw std::runtime_error("Column index not found");
         }
     }
 };
